@@ -23,7 +23,10 @@ type PartyElectionResult struct {
 	VoteCount      int
 }
 
-func getAllCandidate() (candidates []Candidate) {
+var _candidates = []Candidate{}
+
+func initAllCandidate() {
+	_candidates = []Candidate{}
 	rows, err := db.Query("SELECT * FROM candidates")
 	if err != nil {
 		panic(err.Error())
@@ -36,9 +39,12 @@ func getAllCandidate() (candidates []Candidate) {
 		if err != nil {
 			panic(err.Error())
 		}
-		candidates = append(candidates, c)
+		_candidates = append(_candidates, c)
 	}
-	return
+}
+
+func getAllCandidate() []Candidate {
+	return _candidates
 }
 
 func getCandidate(candidateID int) (c Candidate, err error) {

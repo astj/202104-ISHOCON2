@@ -32,7 +32,7 @@ func main() {
 	db.SetMaxIdleConns(5)
 
 	// initialize data
-	candidates := getAllCandidate()
+	initAllCandidate()
 
 	gin.SetMode(gin.DebugMode)
 	r := gin.Default()
@@ -141,6 +141,7 @@ func main() {
 
 	// GET /vote
 	r.GET("/vote", func(c *gin.Context) {
+		candidates := getAllCandidate()
 		r.SetHTMLTemplate(template.Must(template.ParseFiles(layout, "templates/vote.tmpl")))
 		c.HTML(http.StatusOK, "base", gin.H{
 			"candidates": candidates,
@@ -150,6 +151,7 @@ func main() {
 
 	// POST /vote
 	r.POST("/vote", func(c *gin.Context) {
+		candidates := getAllCandidate()
 		user, userErr := getUser(c.PostForm("name"), c.PostForm("address"), c.PostForm("mynumber"))
 		candidate, cndErr := getCandidateByName(c.PostForm("candidate"))
 		votedCount := getUserVotedCount(user.ID)

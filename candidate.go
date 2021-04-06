@@ -106,13 +106,13 @@ func getCandidatesByPoliticalParty(party string) []Candidate {
 	return _candidatesByParty[party]
 }
 
-var ca = smartcache.New(1*time.Minute, 30*time.Second, func(ctx context.Context) (interface{}, error) {
+var getElectionResultCache = smartcache.New(1*time.Minute, 30*time.Second, func(ctx context.Context) (interface{}, error) {
 	val := _getElectionResult()
 	return val, nil
 })
 
 func getElectionResult() (result []CandidateElectionResult) {
-	val, _ := ca.Get(context.Background())
+	val, _ := getElectionResultCache.Get(context.Background())
 
 	return val.([]CandidateElectionResult)
 }

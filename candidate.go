@@ -1,5 +1,7 @@
 package main
 
+import "errors"
+
 // Candidate Model
 type Candidate struct {
 	ID             int
@@ -24,9 +26,13 @@ type PartyElectionResult struct {
 }
 
 var _candidates = []Candidate{}
+var _candidateByID = map[int]Candidate{}
+var _candidateByName = map[string]Candidate{}
 
 func initAllCandidate() {
 	_candidates = []Candidate{}
+	_candidateByID = make(map[int]Candidate)
+	_candidateByName = make(map[string]Candidate)
 	rows, err := db.Query("SELECT * FROM candidates")
 	if err != nil {
 		panic(err.Error())
@@ -39,6 +45,8 @@ func initAllCandidate() {
 		if err != nil {
 			panic(err.Error())
 		}
+		_candidateByID[c.ID] = c
+		_candidateByName[c.Name] = c
 		_candidates = append(_candidates, c)
 	}
 }
@@ -47,16 +55,20 @@ func getAllCandidate() []Candidate {
 	return _candidates
 }
 
-func getCandidate(candidateID int) (c Candidate, err error) {
-	row := db.QueryRow("SELECT * FROM candidates WHERE id = ?", candidateID)
-	err = row.Scan(&c.ID, &c.Name, &c.PoliticalParty, &c.Sex)
-	return
+func getCandidate(candidateID int) (Candidate, error) {
+	c, ok := _candidateByID[candidateID]
+	if !ok {
+		return Candidate{}, errors.New("not found")
+	}
+	return c, nil
 }
 
 func getCandidateByName(name string) (c Candidate, err error) {
-	row := db.QueryRow("SELECT * FROM candidates WHERE name = ?", name)
-	err = row.Scan(&c.ID, &c.Name, &c.PoliticalParty, &c.Sex)
-	return
+	c, ok := _candidateByName[name]
+	if !ok {
+		return Candidate{}, errors.New("not found")
+	}
+	return c, nil
 }
 
 func getAllPartyName() (partyNames []string) {

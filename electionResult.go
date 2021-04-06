@@ -1,6 +1,12 @@
 package main
 
-import "sort"
+import (
+	"context"
+	"sort"
+	"time"
+
+	"github.com/Songmu/smartcache"
+)
 
 type topRenderArgs struct {
 	candidates []CandidateElectionResult
@@ -8,7 +14,18 @@ type topRenderArgs struct {
 	sexRatio   map[string]int
 }
 
+var getTopRenderArgsCache = smartcache.New(30*time.Second, 29*time.Second, func(ctx context.Context) (interface{}, error) {
+	val := _getTopRenderArgs()
+	return val, nil
+})
+
 func getTopRenderArgs() topRenderArgs {
+	val, _ := getTopRenderArgsCache.Get(context.Background())
+
+	return val.(topRenderArgs)
+}
+
+func _getTopRenderArgs() topRenderArgs {
 	electionResults := getElectionResult()
 
 	// 上位10人と最下位のみ表示

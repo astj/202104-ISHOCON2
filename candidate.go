@@ -34,11 +34,13 @@ type PartyElectionResult struct {
 var _candidates = []Candidate{}
 var _candidateByID = map[int]Candidate{}
 var _candidateByName = map[string]Candidate{}
+var _candidatesByParty = map[string][]Candidate{}
 
 func initAllCandidate() {
 	_candidates = []Candidate{}
 	_candidateByID = make(map[int]Candidate)
 	_candidateByName = make(map[string]Candidate)
+	_candidatesByParty = make(map[string][]Candidate)
 	rows, err := db.Query("SELECT * FROM candidates")
 	if err != nil {
 		panic(err.Error())
@@ -53,6 +55,11 @@ func initAllCandidate() {
 		}
 		_candidateByID[c.ID] = c
 		_candidateByName[c.Name] = c
+		if _, ok := _candidatesByParty[c.PoliticalParty]; !ok {
+			_candidatesByParty[c.PoliticalParty] = []Candidate{c}
+		} else {
+			_candidatesByParty[c.PoliticalParty] = append(_candidatesByParty[c.PoliticalParty], c)
+		}
 		_candidates = append(_candidates, c)
 	}
 }
@@ -95,22 +102,8 @@ func getAllPartyName() (partyNames []string) {
 	return
 }
 
-func getCandidatesByPoliticalParty(party string) (candidates []Candidate) {
-	rows, err := db.Query("SELECT * FROM candidates WHERE political_party = ?", party)
-	if err != nil {
-		panic(err.Error())
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		c := Candidate{}
-		err = rows.Scan(&c.ID, &c.Name, &c.PoliticalParty, &c.Sex)
-		if err != nil {
-			panic(err.Error())
-		}
-		candidates = append(candidates, c)
-	}
-	return
+func getCandidatesByPoliticalParty(party string) []Candidate {
+	return _candidatesByParty[party]
 }
 
 var (

@@ -1,4 +1,4 @@
-webapp:
+webapp: *.go
 	GOOS=linux go build -o webapp .
 
 .PHONY: deploy-webapp

@@ -31,6 +31,9 @@ func main() {
 	db, _ = sql.Open("mysql", user+":"+pass+"@/"+dbname)
 	db.SetMaxIdleConns(5)
 
+	// initialize data
+	candidates := getAllCandidate()
+
 	gin.SetMode(gin.DebugMode)
 	r := gin.Default()
 	r.Use(static.Serve("/css", static.LocalFile("public/css", true)))
@@ -138,8 +141,6 @@ func main() {
 
 	// GET /vote
 	r.GET("/vote", func(c *gin.Context) {
-		candidates := getAllCandidate()
-
 		r.SetHTMLTemplate(template.Must(template.ParseFiles(layout, "templates/vote.tmpl")))
 		c.HTML(http.StatusOK, "base", gin.H{
 			"candidates": candidates,
@@ -152,7 +153,6 @@ func main() {
 		user, userErr := getUser(c.PostForm("name"), c.PostForm("address"), c.PostForm("mynumber"))
 		candidate, cndErr := getCandidateByName(c.PostForm("candidate"))
 		votedCount := getUserVotedCount(user.ID)
-		candidates := getAllCandidate()
 		voteCount, _ := strconv.Atoi(c.PostForm("vote_count"))
 
 		var message string

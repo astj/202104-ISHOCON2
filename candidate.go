@@ -106,11 +106,7 @@ func getCandidatesByPoliticalParty(party string) []Candidate {
 	return _candidatesByParty[party]
 }
 
-var (
-	expire     = 1 * time.Minute
-	softExpire = 30 * time.Second
-)
-var ca = smartcache.New(expire, softExpire, func(ctx context.Context) (interface{}, error) {
+var ca = smartcache.New(1*time.Minute, 30*time.Second, func(ctx context.Context) (interface{}, error) {
 	val := _getElectionResult()
 	return val, nil
 })

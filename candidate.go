@@ -1,6 +1,12 @@
 package main
 
-import "errors"
+import (
+	"context"
+	"errors"
+	"time"
+
+	"github.com/Songmu/smartcache"
+)
 
 // Candidate Model
 type Candidate struct {
@@ -107,7 +113,23 @@ func getCandidatesByPoliticalParty(party string) (candidates []Candidate) {
 	return
 }
 
+var (
+	expire     = 1 * time.Minute
+	softExpire = 30 * time.Second
+)
+var ca = smartcache.New(expire, softExpire, func(ctx context.Context) (interface{}, error) {
+	val := _getElectionResult()
+	return val, nil
+})
+
 func getElectionResult() (result []CandidateElectionResult) {
+	val, _ := ca.Get(context.Background())
+
+	return val.([]CandidateElectionResult)
+}
+
+func _getElectionResult() (result []CandidateElectionResult) {
+
 	rows, err := db.Query(`
 		SELECT c.id, c.name, c.political_party, c.sex, IFNULL(v.count, 0)
 		FROM candidates AS c

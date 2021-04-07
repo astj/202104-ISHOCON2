@@ -5,6 +5,8 @@ webapp: *.go
 deploy-webapp: webapp
 	scp -i ~/.ec2/hatena-engineer-astj.pem ./webapp ubuntu@3.112.174.97:/home/ishocon/webapp/go/
 	scp -i ~/.ec2/hatena-engineer-astj.pem ./templates/* ubuntu@3.112.174.97:/home/ishocon/webapp/go/templates/
+	scp -i ~/.ec2/hatena-engineer-astj.pem ./webapp ubuntu@18.177.155.174:/home/ishocon/webapp/go/
+	scp -i ~/.ec2/hatena-engineer-astj.pem ./templates/* ubuntu@18.177.155.174:/home/ishocon/webapp/go/templates/
 
 .PHONY: deploy-nginx
 deploy-nginx: nginx.conf

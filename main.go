@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"html/template"
 	"net/http"
@@ -29,16 +30,21 @@ func main() {
 	user := getEnv("ISHOCON2_DB_USER", "ishocon")
 	pass := getEnv("ISHOCON2_DB_PASSWORD", "ishocon")
 	dbname := getEnv("ISHOCON2_DB_NAME", "ishocon2")
+	// mysql は static なデータしか乗ってないのでそれぞれのホストを見る
 	db, _ = sql.Open("mysql", user+":"+pass+"@/"+dbname)
 	db.SetMaxIdleConns(5)
+	redisAddr := getEnv("ISHOCON2_REDIS_ADDR", "localhost:6379")
 	rdb = redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: redisAddr,
 	})
 
 	// initialize data
 	// /initialize で呼んでもいいかも
 	initAllCandidate()
 	initUsers()
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		panic(err)
+	}
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
@@ -56,6 +62,7 @@ func main() {
 
 		funcs := template.FuncMap{"indexPlus1": func(i int) int { return i + 1 }}
 		r.SetHTMLTemplate(template.Must(template.New("main").Funcs(funcs).ParseFiles(layout, "templates/index.tmpl")))
+		c.Header("Cache-Control", "public; max-age=15")
 		c.HTML(http.StatusOK, "base", gin.H{
 			"candidateResults": args.candidates,
 			"parties":          args.parties,
@@ -75,6 +82,7 @@ func main() {
 		keywords := getVoiceOfSupporter(candidateIDs)
 
 		r.SetHTMLTemplate(template.Must(template.ParseFiles(layout, "templates/candidate.tmpl")))
+		c.Header("Cache-Control", "public; max-age=15")
 		c.HTML(http.StatusOK, "base", gin.H{
 			"candidate": candidate,
 			"votes":     votes,
@@ -101,6 +109,7 @@ func main() {
 		keywords := getVoiceOfSupporter(candidateIDs)
 
 		r.SetHTMLTemplate(template.Must(template.ParseFiles(layout, "templates/political_party.tmpl")))
+		c.Header("Cache-Control", "public; max-age=15")
 		c.HTML(http.StatusOK, "base", gin.H{
 			"politicalParty": partyName,
 			"votes":          votes,
@@ -113,6 +122,7 @@ func main() {
 	r.GET("/vote", func(c *gin.Context) {
 		candidates := getAllCandidate()
 		r.SetHTMLTemplate(template.Must(template.ParseFiles(layout, "templates/vote.tmpl")))
+		c.Header("Cache-Control", "public; max-age=64800")
 		c.HTML(http.StatusOK, "base", gin.H{
 			"candidates": candidates,
 			"message":    "",
@@ -152,7 +162,6 @@ func main() {
 	})
 
 	r.GET("/initialize", func(c *gin.Context) {
-		db.Exec("DELETE FROM votes")
 		rdb.FlushAll(c)
 
 		c.String(http.StatusOK, "Finish")

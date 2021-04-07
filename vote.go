@@ -40,6 +40,12 @@ func createVote(userID int, candidateID int, keyword string) {
 	rdb.IncrBy(ctx, voteRedisKeyForUser(userID), 1)
 }
 
+func createVoteBy(userID int, candidateID int, count int64) {
+	ctx := context.TODO()
+	rdb.ZIncrBy(ctx, candidateVoteRedisKey, float64(count), voteRedisMemberForCandidate(candidateID))
+	rdb.IncrBy(ctx, voteRedisKeyForUser(userID), count)
+}
+
 func getVoiceOfSupporter(candidateIDs []int) (voices []string) {
 	return []string{}
 }

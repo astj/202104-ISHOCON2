@@ -55,9 +55,9 @@ func main() {
 		funcs := template.FuncMap{"indexPlus1": func(i int) int { return i + 1 }}
 		r.SetHTMLTemplate(template.Must(template.New("main").Funcs(funcs).ParseFiles(layout, "templates/index.tmpl")))
 		c.HTML(http.StatusOK, "base", gin.H{
-			"candidates": args.candidates,
-			"parties":    args.parties,
-			"sexRatio":   args.sexRatio,
+			"candidateResults": args.candidates,
+			"parties":          args.parties,
+			"sexRatio":         args.sexRatio,
 		})
 	})
 

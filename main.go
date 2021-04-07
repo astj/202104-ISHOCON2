@@ -36,7 +36,9 @@ func main() {
 	})
 
 	// initialize data
+	// /initialize で呼んでもいいかも
 	initAllCandidate()
+	initUsers()
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()

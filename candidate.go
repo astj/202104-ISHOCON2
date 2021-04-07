@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/Songmu/smartcache"
@@ -119,27 +120,44 @@ func getElectionResult() (result []CandidateElectionResult) {
 
 func _getElectionResult() (result []CandidateElectionResult) {
 
-	rows, err := db.Query(`
-		SELECT c.id, c.name, c.political_party, c.sex, IFNULL(v.count, 0)
-		FROM candidates AS c
-		LEFT OUTER JOIN
-	  	(SELECT candidate_id, COUNT(*) AS count
-	  	FROM votes
-	  	GROUP BY candidate_id) AS v
-		ON c.id = v.candidate_id
-		ORDER BY v.count DESC`)
-	if err != nil {
-		panic(err.Error())
-	}
-	defer rows.Close()
+	ctx := context.TODO()
+	res := rdb.ZRevRangeWithScores(ctx, candidateVoteRedisKey, 0, -1).Val()
 
-	for rows.Next() {
-		r := CandidateElectionResult{}
-		err = rows.Scan(&r.ID, &r.Name, &r.PoliticalParty, &r.Sex, &r.VoteCount)
-		if err != nil {
-			panic(err.Error())
+	// candidates := getAllCandidate()
+	// まず1票以上投票がある人を追加していく
+	scoreByCandidate := make(map[int]int)
+	for _, m := range res {
+		candidateID, _ := strconv.Atoi(m.Member.(string))
+		scoreByCandidate[candidateID] = int(m.Score)
+
+		candidate, _ := getCandidate(candidateID)
+		r := CandidateElectionResult{
+			ID:             candidate.ID,
+			Name:           candidate.Name,
+			PoliticalParty: candidate.PoliticalParty,
+			Sex:            candidate.Sex,
+			VoteCount:      int(m.Score),
 		}
 		result = append(result, r)
 	}
+
+	// 0票の人がいたらそれを追加する
+	//	if len(result) != len(res) {
+	candidates := getAllCandidate()
+	for _, candidate := range candidates {
+		if scoreByCandidate[candidate.ID] == 0 {
+			r := CandidateElectionResult{
+				ID:             candidate.ID,
+				Name:           candidate.Name,
+				PoliticalParty: candidate.PoliticalParty,
+				Sex:            candidate.Sex,
+				VoteCount:      0,
+			}
+			result = append(result, r)
+
+		}
+	}
+	//}
+
 	return
 }

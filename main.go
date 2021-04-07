@@ -10,10 +10,12 @@ import (
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 var db *sql.DB
+var rdb *redis.Client
 
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
@@ -29,6 +31,9 @@ func main() {
 	dbname := getEnv("ISHOCON2_DB_NAME", "ishocon2")
 	db, _ = sql.Open("mysql", user+":"+pass+"@/"+dbname)
 	db.SetMaxIdleConns(5)
+	rdb = redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
 
 	// initialize data
 	initAllCandidate()
@@ -146,6 +151,7 @@ func main() {
 
 	r.GET("/initialize", func(c *gin.Context) {
 		db.Exec("DELETE FROM votes")
+		rdb.FlushAll(c)
 
 		c.String(http.StatusOK, "Finish")
 	})

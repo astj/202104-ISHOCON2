@@ -38,8 +38,8 @@ func main() {
 	// initialize data
 	initAllCandidate()
 
-	gin.SetMode(gin.DebugMode)
-	r := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
 	r.Use(static.Serve("/css", static.LocalFile("public/css", true)))
 	layout := "templates/layout.tmpl"
 
